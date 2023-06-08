@@ -7,7 +7,9 @@ from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.authentication import TokenAuthentication
+
 from .serializers import LoginSerializer, UserSerializer, SignUpSerializer
+from .models import ProfileType, Profile
 
 
 from rest_framework.authtoken.models import Token
@@ -54,11 +56,15 @@ class SignUpView(APIView):
         serializer = self.serializer_class(data=request.data)
         serializer.is_valid(raise_exception=True)
         try:
-            user = serializer.save()
+            user, profile_type_selected = serializer.save()
             token, _ = Token.objects.get_or_create(user=user)
-            user_serializer = dict(serializer.data)
-            user_serializer["token"] = str(token.key)
-            return Response(user_serializer, status=status.HTTP_200_OK)
+            user_serialized = UserSerializer(user)
+            user_serialized = dict(user_serialized.data)
+            user_serialized["token"] = str(token.key)
+            user_serialized["profile_type"] = str(profile_type_selected)
+            profile_type = ProfileType.objects.get(pk=profile_type_selected)
+            profile = Profile.objects.create(user=user, profile_type=profile_type)
+            return Response(user_serialized, status=status.HTTP_200_OK)
         except:
             return Response(
                 {

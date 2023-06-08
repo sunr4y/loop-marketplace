@@ -24,8 +24,14 @@ class SignUpSerializer(serializers.ModelSerializer):
     email = serializers.EmailField(required=True)
     password = serializers.CharField(required=True, write_only=True)
     phone_number = serializers.CharField(required=True)
-    last_login = serializers.DateField(required=False, write_only=True)
+    profile_type = serializers.CharField(required=True, write_only=True)
 
     class Meta:
         model = CustomUser
         fields = "__all__"
+
+    def create(self, validated_data):
+        # Eliminar el campo profile_type si existe
+        profile_type = validated_data.pop("profile_type", None)
+        print(profile_type)
+        return super().create(validated_data), profile_type
